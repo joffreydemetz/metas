@@ -1,15 +1,17 @@
 <?php
 
 /**
- * @author    Joffrey Demetz <joffrey.demetz@gmail.com>
- * @license   MIT License; <https://opensource.org/licenses/MIT>
+ * (c) Joffrey Demetz <joffrey.demetz@gmail.com>
+ * 
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
 
 namespace JDZ\Metas\Manager;
 
 class MsManager extends Manager
 {
-  protected bool $msBrowserConfigSupport;
+  private bool $msBrowserConfigSupport;
 
   public function __construct(bool $msBrowserConfigSupport = false)
   {

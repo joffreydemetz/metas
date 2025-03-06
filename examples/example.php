@@ -11,7 +11,7 @@ use JDZ\Utils\Data as jData;
 $standalone = true;
 $cacheSupport = true;
 $appleSupport = true;
-$msieSupport = true;
+$msieSupport = false;
 $baseUrl = 'https://localhost/';
 
 $data = new jData();
@@ -147,7 +147,10 @@ try {
         return $head;
     }
 
-    echo $documentNamespaces . "\n";
+    echo 'HTML namespaces' . "\n\n";
+    echo '<html prefix="' . $documentNamespaces . '"> ' . "\n\n";
+
+    echo '<head>' . "\n\n";
     echo printHead($documentHead);
 } catch (\Throwable $e) {
     echo $e->getMessage();

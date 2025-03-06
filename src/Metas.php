@@ -1,8 +1,10 @@
 <?php
 
 /**
- * @author    Joffrey Demetz <joffrey.demetz@gmail.com>
- * @license   MIT License; <https://opensource.org/licenses/MIT>
+ * (c) Joffrey Demetz <joffrey.demetz@gmail.com>
+ * 
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
 
 namespace JDZ\Metas;
@@ -14,15 +16,20 @@ class Metas
   const TITLE_LIMIT_LENGTH = 90;
   const DESCRIPTION_LIMIT_LENGTH = 200;
 
-  protected array $config = [
-    'title_limit' => self::TITLE_LIMIT_LENGTH,
-    'seo-title_limit' => self::TITLE_LIMIT_LENGTH,
-    'description_limit' => self::DESCRIPTION_LIMIT_LENGTH,
-  ];
+  private array $config;
 
-  public array $managers = [];
-  protected array $elements = [];
-  protected array $ns = [];
+  private array $managers = [];
+  private array $elements = [];
+  private array $ns = [];
+
+  public function __construct(array $config = [])
+  {
+    $this->config = array_merge([
+      'title_limit' => self::TITLE_LIMIT_LENGTH,
+      'seo-title_limit' => self::TITLE_LIMIT_LENGTH,
+      'description_limit' => self::DESCRIPTION_LIMIT_LENGTH,
+    ], $config);
+  }
 
   public function addNamespace(string $ns)
   {
@@ -189,7 +196,7 @@ class Metas
     return \array_values($this->elements);
   }
 
-  public function guessElementPosition(string $element, bool $multiple = false): string
+  private function guessElementPosition(string $element, bool $multiple = false): string
   {
     $position = 0;
     $minimum  = 500;
@@ -376,7 +383,7 @@ class Metas
     return $pos;
   }
 
-  protected function cleanText(string $str): string
+  private function cleanText(string $str): string
   {
     $str = \html_entity_decode($str);
     $str = \strip_tags($str);
@@ -388,7 +395,7 @@ class Metas
     return $str;
   }
 
-  protected function cutText(string $text, string|int $key): string
+  private function cutText(string $text, string|int $key): string
   {
     if ('' === $text) {
       return $text;
