@@ -1,4 +1,4 @@
-# mJDZ Metas manager
+# JDZ Metas manager
 
 Utility to manage the head metas of a web page
 
