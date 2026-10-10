@@ -2,58 +2,34 @@
 
 namespace JDZ\Metas\Tests\Manager;
 
-use PHPUnit\Framework\TestCase;
-use JDZ\Metas\Metas;
 use JDZ\Metas\Manager\TwitterManager;
+use JDZ\Metas\Metas;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 
+/**
+ * Twitter cards are `<meta name="twitter:…">` (they were rendered with property=).
+ */
 class TwitterManagerTest extends TestCase
 {
-    private Metas $metas;
-
-    protected function setUp(): void
+    public static function cards(): array
     {
-        $this->metas = new Metas();
-        $this->metas->register(new TwitterManager());
+        return [
+            'card' => ['twitter-card', 'summary_large_image', 'twitter:card'],
+            'creator' => ['twitter-creator', '@johndoe', 'twitter:creator'],
+            'site' => ['twitter-site', '@mysite', 'twitter:site'],
+        ];
     }
 
-    public function testSetTwitterCard(): void
+    #[DataProvider('cards')]
+    public function testATwitterCardIsANamedMeta(string $key, string $value, string $name): void
     {
-        $this->metas->set('twitter-card', 'summary_large_image');
+        $metas = new Metas();
+        $metas->register(new TwitterManager());
+        $metas->set($key, $value);
 
-        $elements = $this->metas->getElements();
-        $card = $this->findByProperty($elements, 'twitter:card');
+        $attrs = array_column($metas->getElements(), 'attrs');
 
-        $this->assertNotNull($card);
-        $this->assertEquals('summary_large_image', $card['attrs']['content']);
-    }
-
-    public function testSetTwitterCreator(): void
-    {
-        $this->metas->set('twitter-creator', '@johndoe');
-
-        $elements = $this->metas->getElements();
-        $creator = $this->findByProperty($elements, 'twitter:creator');
-
-        $this->assertEquals('@johndoe', $creator['attrs']['content']);
-    }
-
-    public function testSetTwitterSite(): void
-    {
-        $this->metas->set('twitter-site', '@mysite');
-
-        $elements = $this->metas->getElements();
-        $site = $this->findByProperty($elements, 'twitter:site');
-
-        $this->assertEquals('@mysite', $site['attrs']['content']);
-    }
-
-    private function findByProperty(array $elements, string $property): ?array
-    {
-        foreach ($elements as $el) {
-            if (isset($el['attrs']['property']) && $el['attrs']['property'] === $property) {
-                return $el;
-            }
-        }
-        return null;
+        $this->assertContains(['name' => $name, 'content' => $value], $attrs);
     }
 }

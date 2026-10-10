@@ -13,19 +13,19 @@ class TwitterManager extends Manager
 {
   public function setTwitterCard(string $card)
   {
-    $this->container->setMetaProperty('twitter:card', $card);
+    $this->container->setMetaName('twitter:card', $card);
     return $this;
   }
 
   public function setTwitterCreator(string $creator)
   {
-    $this->container->setMetaProperty('twitter:creator', $creator);
+    $this->container->setMetaName('twitter:creator', $creator);
     return $this;
   }
 
   public function setTwitterSite(string $site)
   {
-    $this->container->setMetaProperty('twitter:site', $site);
+    $this->container->setMetaName('twitter:site', $site);
     return $this;
   }
 }
