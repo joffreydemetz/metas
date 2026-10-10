@@ -336,21 +336,20 @@ class Metas
     }
 
     if (0 === $position) {
-      $positionKeys = [];
-      $elementKeys = [];
-      foreach ($this->elements as $key => $value) {
-        \preg_match("/^(\d+)([^\d]+)(\d+)?$/", $key, $m);
-        $positionKeys[] = $m[1];
-        $elementKeys[$m[1]] = $m[1] . $m[2];
+      // every key starts with its 3-digit position (the element name may hold digits too)
+      $taken = [];
+      foreach (\array_keys($this->elements) as $key) {
+        $taken[(int) \substr($key, 0, 3)] = true;
       }
 
       for ($_position = $minimum; $_position < 1000; $_position++) {
-        if (in_array(\str_pad($_position, 3, '0', \STR_PAD_LEFT) . $element, \array_values($elementKeys))) {
+        // the same element again takes its own place back
+        if (isset($this->elements[\str_pad($_position, 3, '0', \STR_PAD_LEFT) . $element])) {
           $position = $_position;
           break;
         }
 
-        if (in_array(\str_pad($_position, 3, '0', \STR_PAD_LEFT), $positionKeys)) {
+        if (isset($taken[$_position])) {
           continue;
         }
 
@@ -359,11 +358,11 @@ class Metas
       }
     }
 
-    // for metas arrays
+    // for metas arrays (two-digit index, so the 10th sorts after the 9th)
     if (true === $multiple) {
       $pos = false;
-      while (!$pos && $arrayPosition < 10) {
-        $_pos = str_pad($position, 3, '0', STR_PAD_LEFT) . $element . $arrayPosition;
+      while (!$pos && $arrayPosition <= 10) {
+        $_pos = str_pad($position, 3, '0', STR_PAD_LEFT) . $element . str_pad($arrayPosition, 2, '0', STR_PAD_LEFT);
 
         if (!isset($this->elements[$_pos])) {
           $pos = $_pos;

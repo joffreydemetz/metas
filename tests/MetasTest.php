@@ -2,6 +2,10 @@
 
 namespace JDZ\Metas\Tests;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use JDZ\Metas\Manager\MsManager;
+use JDZ\Metas\Manager\AppleManager;
+use JDZ\Metas\Manager\ManagerInterface;
 use PHPUnit\Framework\TestCase;
 use JDZ\Metas\Metas;
 use JDZ\Metas\Manager\BaseManager;
@@ -371,5 +375,108 @@ class MetasTest extends TestCase
             }
         }
         return null;
+    }
+
+
+    /** The name / property of each element, in output order (charset, title and base by their tag). */
+    private static function names(Metas $metas): array
+    {
+        return array_map(
+            fn(array $e) => $e['attrs']['name'] ?? $e['attrs']['property'] ?? (isset($e['attrs']['charset']) ? 'charset' : $e['tag']),
+            $metas->getElements()
+        );
+    }
+
+    public function testElementsComeOutInHeadOrderWhateverTheCallOrder(): void
+    {
+        $metas = (new Metas())
+            ->setMetaName('custom', 'c')
+            ->setMetaProperty('product:price:amount', '10')
+            ->setMetaName('twitter:card', 'summary')
+            ->setMetaProperty('og:title', 'T')
+            ->setTitle('Title')
+            ->setMetaName('description', 'd')
+            ->setMetaName('viewport', 'width=device-width')
+            ->setCharset('utf-8')
+            ->setBase('/');
+
+        $this->assertSame(
+            ['base', 'charset', 'viewport', 'description', 'title', 'og:title', 'twitter:card', 'product:price:amount', 'custom'],
+            self::names($metas)
+        );
+    }
+
+    public static function replacedElements(): array
+    {
+        return [
+            'a fixed position' => ['description'],
+            'an og: name' => ['og:title'],
+            'a twitter: name' => ['twitter:card'],
+            'a free name' => ['custom'],
+            'a name ending in a digit' => ['twitter:label1'],
+            'a name with a digit inside' => ['msapplication-square70x70logo'],
+        ];
+    }
+
+    #[DataProvider('replacedElements')]
+    public function testSettingAnElementTwiceReplacesIt(string $name): void
+    {
+        $metas = (new Metas())
+            ->setMetaName('other', 'o')
+            ->setMetaName($name, 'first')
+            ->setMetaName($name, 'second');
+
+        $this->assertCount(2, $metas->getElements());
+        $this->assertContains(['tag' => 'meta', 'attrs' => ['name' => $name, 'content' => 'second']], $metas->getElements());
+    }
+
+    public function testThemeColorKeepsTenValuesInOrderThenThrows(): void
+    {
+        $metas = new Metas();
+        $colors = array_map(fn(int $i) => sprintf('#%06d', $i), range(1, 10));
+
+        foreach ($colors as $color) {
+            $metas->setMetaName('theme-color', $color);
+        }
+
+        $this->assertSame($colors, array_column(array_column($metas->getElements(), 'attrs'), 'content'));
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Not more than 10 elements per meta tag');
+        $metas->setMetaName('theme-color', '#ffffff');
+    }
+
+    public static function platformManagers(): array
+    {
+        return [
+            'ms, no browserconfig' => [
+                new MsManager(), 'ms-application-config', '/browserconfig.xml',
+                ['msapplication-config' => 'none'],
+            ],
+            'ms with browserconfig' => [
+                new MsManager(true), 'ms-application-config', '/browserconfig.xml',
+                ['msapplication-tilecolor' => '#F9F9F9', 'msapplication-config' => '/browserconfig.xml'],
+            ],
+            'ms theme colour without browserconfig' => [
+                new MsManager(), 'theme-color', '#123456',
+                [],
+            ],
+            'apple, no web app' => [
+                new AppleManager(), 'application-name', 'App',
+                ['apple-mobile-web-app-title' => 'App'],
+            ],
+            'apple web app' => [
+                new AppleManager(true), 'application-name', 'App',
+                ['apple-mobile-web-app-title' => 'App', 'apple-mobile-web-app-capable' => 'yes', 'apple-mobile-web-app-status-bar-style' => 'black'],
+            ],
+        ];
+    }
+
+    #[DataProvider('platformManagers')]
+    public function testPlatformManagersFollowTheirSupportFlag(ManagerInterface $manager, string $key, string $value, array $expected): void
+    {
+        $metas = (new Metas())->register($manager)->set($key, $value);
+
+        $this->assertSame($expected, array_column(array_column($metas->getElements(), 'attrs'), 'content', 'name'));
     }
 }
